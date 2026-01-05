@@ -334,7 +334,7 @@ MonoBehaviour:
   _camera: {fileID: 330585546}
   _targetRb: {fileID: 0}
   _target: {fileID: 5866666019836924939}
-  startChaseRadius: 1
+  startChaseRadius: 3
   stopChaseRadius: 1
   smoothTime: 0.2
   maxSpeed: 6
@@ -1322,6 +1322,10 @@ PrefabInstance:
       propertyPath: genericWorldItemPrefab
       value: 
       objectReference: {fileID: 1470263155161271946, guid: 84c5c933cd9f936419e182dab2a72025, type: 3}
+    - target: {fileID: 8988855789593971816, guid: 5b20c7dacbc520541921f6e9079ae50f, type: 3}
+      propertyPath: moveSpeed
+      value: 3
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
