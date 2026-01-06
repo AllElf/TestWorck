@@ -6,10 +6,14 @@ namespace Game.Player
     public sealed class PlayerInputSimple : MonoBehaviour
     {
         [SerializeField] private RigidbodyTopDownMotor motor;
+        [SerializeField] private Animator animatorPlayer;
 
         [Header("Camera Relative")]
         [Tooltip("Если не задано — будет искать Camera.main автоматически (каждый кадр при необходимости).")]
         [SerializeField] private Transform cameraTransform;
+
+        private float x,y;
+        bool isRun = false;
 
         private void Reset()
         {
@@ -27,8 +31,8 @@ namespace Game.Player
                 if (cam != null) cameraTransform = cam.transform;
             }
 
-            float x = Input.GetAxisRaw("Horizontal"); // A/D
-            float y = Input.GetAxisRaw("Vertical");   // W/S
+             x = Input.GetAxisRaw("Horizontal"); // A/D
+             y = Input.GetAxisRaw("Vertical");   // W/S
 
             Vector3 moveWorld;
 
@@ -52,6 +56,25 @@ namespace Game.Player
             }
 
             motor.SetMoveWorld(moveWorld);
+            AnimatorMove();
+        }
+
+        public void AnimatorMove()
+        {
+            if (animatorPlayer == null) return;
+
+            AnimatorStateInfo stateInfo = animatorPlayer.GetCurrentAnimatorStateInfo(0);
+
+            if ((x != 0 || y != 0) && !stateInfo.IsName("Running"))
+            {
+                animatorPlayer.Play("Running");
+                isRun = true;
+            }
+            else if ((x == 0 && y == 0) && !stateInfo.IsName("Idle"))
+            {
+                animatorPlayer.Play("Idle");
+                isRun = false;
+            }
         }
     }
 }

@@ -332,13 +332,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraTracking
   _camera: {fileID: 330585546}
-  _targetRb: {fileID: 0}
   _target: {fileID: 5866666019836924939}
-  startChaseRadius: 3
-  stopChaseRadius: 1
-  smoothTime: 0.2
-  maxSpeed: 6
+  chaseStartRadius: 2
+  chaseStopRadius: 2
+  followSpeed: 3
   lockY: 1
+  deadEpsilon: 0.02
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -1274,6 +1273,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2156172277619479378, guid: 5b20c7dacbc520541921f6e9079ae50f, type: 3}
+      propertyPath: animatorPlayer
+      value: 
+      objectReference: {fileID: 5866666019836924952}
     - target: {fileID: 2646293566488369367, guid: 5b20c7dacbc520541921f6e9079ae50f, type: 3}
       propertyPath: m_Name
       value: Player
@@ -1422,6 +1425,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 158bd6d8b0c722940b3f82b04d5174ed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Game.Player.InventoryDropper
+--- !u!95 &5866666019836924952 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 6528088461151903802, guid: 5b20c7dacbc520541921f6e9079ae50f, type: 3}
+  m_PrefabInstance: {fileID: 1858417322061692975}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

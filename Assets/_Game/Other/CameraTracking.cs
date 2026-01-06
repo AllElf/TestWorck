@@ -1,26 +1,25 @@
-using UnityEngine;
+п»їusing UnityEngine;
 
 public class CameraTracking : MonoBehaviour
 {
     [Header("Refs")]
-    [SerializeField] private Transform _camera;       // Камера или CameraRig
-    [SerializeField] private Rigidbody _targetRb;     // Rigidbody игрока (важно!)
-    [SerializeField] private Transform _target;       // Если Rigidbody не задан, будет fallback
+    [SerializeField] private Transform _camera;   // РљР°РјРµСЂР° РёР»Рё CameraRig
+    [SerializeField] private Transform _target;   // РРіСЂРѕРє (Transform)
 
-    [Header("Dead Zone & Follow")]
-    [SerializeField, Min(0f)] private float startChaseRadius = 4f; // старт погони (вышли за радиус)
-    [SerializeField, Min(0f)] private float stopChaseRadius = 1f;  // стоп погони (достаточно близко)
-    [SerializeField, Min(0.01f)] private float smoothTime = 0.18f;
-    [SerializeField] private float maxSpeed = 80f;
+    [Header("Dead Zone")]
+    [SerializeField, Min(0f)] private float chaseStartRadius = 4f; // РєРѕРіРґР° РЅР°С‡РёРЅР°РµРј СЃР»РµРґРѕРІР°С‚СЊ
+    [SerializeField, Min(0f)] private float chaseStopRadius = 2f; // РєРѕРіРґР° РїСЂРµРєСЂР°С‰Р°РµРј (РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РјРµРЅСЊС€Рµ start)
+
+    [Header("Follow")]
+    [SerializeField, Min(0f)] private float followSpeed = 8f;      // СЃРєРѕСЂРѕСЃС‚СЊ РєР°РјРµСЂС‹ (РµРґ/СЃ)
     [SerializeField] private bool lockY = true;
 
-    private Vector3 _startOffset;
-    private Vector3 _velocity;
-    private bool _isChasing;
+    [Header("Stability")]
+    [Tooltip("РњРёРЅРёРјР°Р»СЊРЅР°СЏ РґРёСЃС‚Р°РЅС†РёСЏ, С‡С‚РѕР±С‹ РЅРµ РґРµСЂРіР°С‚СЊ РїРѕР·РёС†РёСЋ РЅР° РјРёРєСЂРѕС€Р°РіРё.")]
+    [SerializeField, Min(0f)] private float deadEpsilon = 0.02f;
 
-    // Для интерполяции цели
-    private Vector3 _rbPrevPos;
-    private Vector3 _rbCurrPos;
+    private Vector3 _startOffset;
+    private bool _isChasing;
 
     private void Reset()
     {
@@ -33,109 +32,55 @@ public class CameraTracking : MonoBehaviour
         if (_camera == null && Camera.main != null)
             _camera = Camera.main.transform;
 
-        if (_camera == null)
+        if (_camera == null || _target == null)
         {
-            Debug.LogError("CameraTracking: назначьте _camera.");
+            Debug.LogError("CameraTracking: РЅР°Р·РЅР°С‡СЊС‚Рµ _camera Рё _target.");
             enabled = false;
             return;
         }
 
-        // Если не задан Rigidbody, попробуем взять из _target
-        if (_targetRb == null && _target != null)
-            _targetRb = _target.GetComponent<Rigidbody>();
+        // Р’Р°Р¶РЅРѕ: РµСЃР»Рё РёРіСЂРѕРє РґРІРёРіР°РµС‚СЃСЏ Rigidbody, РІРєР»СЋС‡РёС‚Рµ Сѓ РЅРµРіРѕ Interpolation=Interpolate,
+        // С‚РѕРіРґР° _target.position Р±СѓРґРµС‚ СѓР¶Рµ СЃРіР»Р°Р¶РµРЅ РїРѕРґ РєР°РґСЂ.
+        _startOffset = _camera.position - _target.position;
 
-        if (_targetRb == null && _target == null)
-        {
-            Debug.LogError("CameraTracking: назначьте _targetRb или _target.");
-            enabled = false;
-            return;
-        }
-
-        Vector3 targetPos = GetTargetPosition();
-        _startOffset = _camera.position - targetPos;
-
-        _rbPrevPos = targetPos;
-        _rbCurrPos = targetPos;
-
-        if (stopChaseRadius > startChaseRadius)
-            stopChaseRadius = startChaseRadius * 0.5f;
-    }
-
-    private void FixedUpdate()
-    {
-        // обновляем позиции цели на физическом тике
-        Vector3 pos = GetTargetPosition();
-        _rbPrevPos = _rbCurrPos;
-        _rbCurrPos = pos;
+        // РіР°СЂР°РЅС‚РёСЏ РіРёСЃС‚РµСЂРµР·РёСЃР°
+        if (chaseStopRadius >= chaseStartRadius)
+            chaseStopRadius = chaseStartRadius * 0.5f;
     }
 
     private void LateUpdate()
     {
-        Vector3 targetPos = GetInterpolatedTargetPosition();
-        Vector3 desired = targetPos + _startOffset;
+        Vector3 desired = _target.position + _startOffset;
 
-        // расстояние по XZ
-        Vector2 camXZ = new Vector2(_camera.position.x, _camera.position.z);
+        Vector3 camPos = _camera.position;
+        Vector2 camXZ = new Vector2(camPos.x, camPos.z);
         Vector2 desXZ = new Vector2(desired.x, desired.z);
+
         float dist = Vector2.Distance(camXZ, desXZ);
 
-        // старт погони
+        // Р’РєР»СЋС‡Р°РµРј/РІС‹РєР»СЋС‡Р°РµРј СЂРµР¶РёРј РїСЂРµСЃР»РµРґРѕРІР°РЅРёСЏ СЃ РіРёСЃС‚РµСЂРµР·РёСЃРѕРј
         if (!_isChasing)
         {
-            if (dist > startChaseRadius)
-            {
-                _isChasing = true;
-                _velocity = Vector3.zero;
-            }
-            else
-            {
-                return;
-            }
+            if (dist > chaseStartRadius) _isChasing = true;
+            else return;
+        }
+        else
+        {
+            if (dist < chaseStopRadius) { _isChasing = false; return; }
         }
 
-        // движение к цели
+        // Р”РІРёРіР°РµРј С‚РѕР»СЊРєРѕ РїРѕ XZ
         Vector3 targetCamPos = desired;
-        if (lockY)
-            targetCamPos.y = _camera.position.y;
+        if (lockY) targetCamPos.y = camPos.y;
 
-        _camera.position = Vector3.SmoothDamp(
-            _camera.position,
-            targetCamPos,
-            ref _velocity,
-            smoothTime,
-            maxSpeed,
-            Time.deltaTime
-        );
+        // Р•СЃР»Рё СѓР¶Рµ РїРѕС‡С‚Рё РЅР° РјРµСЃС‚Рµ вЂ” РЅРµ РґРµР»Р°РµРј РјРёРєСЂРѕРґРІРёР¶РµРЅРёР№ (СѓР±РёСЂР°РµС‚ РґСЂРѕР¶СЊ)
+        Vector3 delta = targetCamPos - camPos;
+        delta.y = 0f;
+        if (delta.sqrMagnitude <= deadEpsilon * deadEpsilon)
+            return;
 
-        // стоп погони (гистерезис)
-        Vector2 newXZ = new Vector2(_camera.position.x, _camera.position.z);
-        float newDist = Vector2.Distance(newXZ, desXZ);
-
-        if (newDist <= stopChaseRadius)
-        {
-            // “снап” в точку, чтобы убрать микро-дрожание
-            _camera.position = new Vector3(targetCamPos.x, _camera.position.y, targetCamPos.z);
-            _velocity = Vector3.zero;
-            _isChasing = false;
-        }
-    }
-
-    private Vector3 GetTargetPosition()
-    {
-        if (_targetRb != null) return _targetRb.position;
-        return _target != null ? _target.position : Vector3.zero;
-    }
-
-    private Vector3 GetInterpolatedTargetPosition()
-    {
-        // alpha между FixedUpdate тиками
-        float alpha = 0f;
-        if (Time.fixedDeltaTime > 0f)
-        {
-            alpha = (Time.time - Time.fixedTime) / Time.fixedDeltaTime;
-            alpha = Mathf.Clamp01(alpha);
-        }
-
-        return Vector3.Lerp(_rbPrevPos, _rbCurrPos, alpha);
+        // РџСЂРµРґСЃРєР°Р·СѓРµРјРѕРµ РґРІРёР¶РµРЅРёРµ Р±РµР· РїРѕРґРїСЂСѓР¶РёРЅРёРІР°РЅРёСЏ
+        float step = followSpeed * Time.deltaTime;
+        _camera.position = Vector3.MoveTowards(camPos, targetCamPos, step);
     }
 }
