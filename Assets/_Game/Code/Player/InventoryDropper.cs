@@ -15,6 +15,7 @@ namespace Game.Player
         [SerializeField] private GameObject genericWorldItemPrefab; // prefab с WorldItemPickup + Collider
         [SerializeField] private float dropForward = 1.2f;
         [SerializeField] private float dropRadius = 0.4f;
+        //[SerializeField] private Transform dropPointer;
 
         private void Reset()
         {
@@ -43,6 +44,7 @@ namespace Game.Player
             }
 
             GameObject go = Instantiate(prefab, spawnPos, Quaternion.identity);
+            //GameObject go = Instantiate(prefab, dropPointer.transform.position, Quaternion.identity);
 
             // Ќастроим данные (если это наш универсальный prefab)
             var runtime = go.GetComponent<WorldItemRuntime>();

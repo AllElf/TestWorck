@@ -15,9 +15,12 @@ namespace Game.Player
         [SerializeField] private float radius = 2.2f;
         [SerializeField] private LayerMask interactableMask = ~0;
         [SerializeField] private KeyCode interactKey = KeyCode.E;
+        [SerializeField] private KeyCode inventorytKey = KeyCode.F;
+        bool isOpenInventory;
 
         [Header("UI (Optional)")]
         [SerializeField] private MonoBehaviour hintUiBehaviour; // должен реализовывать IHintUI
+        [SerializeField] GameObject canvasInventory;
 
         [Header("Debug")]
         [SerializeField] private bool drawGizmos = true;
@@ -47,6 +50,11 @@ namespace Game.Player
                 if (_current.CanInteract(_player))
                     _current.Interact(_player);
             }
+            if (Input.GetKeyDown(inventorytKey))
+            {
+                isOpenInventory = !isOpenInventory;
+            }
+            InventoryOpen();
         }
 
         private IInteractable FindBestInteractable()
@@ -87,6 +95,18 @@ namespace Game.Player
             if (!drawGizmos) return;
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireSphere(transform.position, radius);
+        }
+
+        public void InventoryOpen()
+        {
+            if(isOpenInventory && canvasInventory != null)
+            {
+                canvasInventory.SetActive(true);
+            }
+            else
+            {
+                canvasInventory.SetActive(false);
+            }
         }
     }
 }

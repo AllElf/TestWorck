@@ -48,7 +48,7 @@ public class CameraTracking : MonoBehaviour
             chaseStopRadius = chaseStartRadius * 0.5f;
     }
 
-    private void LateUpdate()
+    private void FixedUpdate()
     {
         Vector3 desired = _target.position + _startOffset;
 
